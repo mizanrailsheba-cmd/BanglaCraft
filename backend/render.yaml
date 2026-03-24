@@ -1,0 +1,12 @@
+services:
+  - type: web_service
+    name: banglacraft-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+      - key: REDIS_URL
+      - key: SECRET_KEY
+      - key: FRONTEND_URL

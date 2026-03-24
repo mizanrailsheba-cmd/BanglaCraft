@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --text: #1A1A1A;
+}
+
+body {
+    background: #FDF6EC;
+    color: var(--text);
+}
+
+.html.lang-bn,
+.lang-bn body {
+    font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+}
