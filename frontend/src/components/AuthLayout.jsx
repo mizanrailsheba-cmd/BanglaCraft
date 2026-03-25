@@ -16,8 +16,19 @@ const AuthLayout = ({ mode }) => {
         try {
             if (mode === 'login') {
                 const res = await api.post('/api/auth/login', { email, password });
+
                 localStorage.setItem('access_token', res.data.access_token);
-                navigate('/dashboard');
+
+                const payload = JSON.parse(atob(res.data.access_token.split('.')[1]));
+                const role = payload.role;
+
+                localStorage.setItem('user_role', role);
+
+                if (role === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/dashboard');
+                }
             } else {
                 await api.post('/api/auth/register', { full_name: fullName, email, password });
                 setMessage(t('order placed', 'Registered successfully, please login'));

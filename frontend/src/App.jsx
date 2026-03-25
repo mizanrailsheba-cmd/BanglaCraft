@@ -11,6 +11,7 @@ import CartPage from './pages/CartPage';
 import DashboardPage from './pages/user/DashboardPage';
 import AdminPanelPage from './pages/admin/AdminPanelPage';
 import WhatsAppButton from './components/WhatsAppButton';
+import ProtectedRoute from './components/ProtectedRoute';
 import { useTranslation } from 'react-i18next';
 
 function App() {
@@ -38,8 +39,16 @@ function App() {
                     <Route path="/products/:slug" element={<ProductDetailPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/contact" element={<ContactPage />} />
-                    <Route path="/dashboard/*" element={<DashboardPage />} />
-                    <Route path="/admin/*" element={<AdminPanelPage />} />
+                    <Route path="/dashboard/*" element={
+                        <ProtectedRoute>
+                            <DashboardPage />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/admin/*" element={
+                        <ProtectedRoute requiredRole="admin">
+                            <AdminPanelPage />
+                        </ProtectedRoute>
+                    } />
                     <Route path="/login" element={<AuthLayout mode="login" />} />
                     <Route path="/register" element={<AuthLayout mode="register" />} />
                     <Route path="*" element={<Navigate to="/" />} />
