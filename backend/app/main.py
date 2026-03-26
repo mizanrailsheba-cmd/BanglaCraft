@@ -5,17 +5,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-# আপনার লোকাল ফাইল থেকে ইমপোর্ট
 from .config import settings
 from .database import engine, Base
-from .models import * # noqa
+from .models import *  # noqa
 from .routers import auth, users, products, categories, payments, site_settings, admin
 from .utils import security
 
-# .env ফাইল লোড করা
 load_dotenv()
 
-# ১. Cloudinary কনফিগারেশন
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -25,23 +22,20 @@ cloudinary.config(
 
 app = FastAPI(title='BanglaCraft API', version='1.0')
 
-# ২. CORS কনফিগারেশন (Local এবং Vercel প্রোডাকশন দুইটার জন্যই)
-# settings.FRONTEND_URL এর পাশাপাশি সরাসরি '*' বা নির্দিষ্ট ডোমেইন যোগ করা হয়েছে
 origins = [
-    str(settings.FRONTEND_URL), 
-    "http://localhost:5173",          # Vite Local
-    "https://banglacraft.vercel.app"   # আপনার Vercel ডোমেইন (ভবিষ্যতে যেটা হবে)
+    str(settings.FRONTEND_URL),
+    "http://localhost:5173",
+    "https://banglacraft.vercel.app"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # প্রোডাকশনে চাইলে শুধু origins লিস্টটি দিতে পারেন
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
 
-# ৩. রাউটারগুলো ইনক্লুড করা
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(products.router)
@@ -50,21 +44,20 @@ app.include_router(payments.router)
 app.include_router(site_settings.router)
 app.include_router(admin.router)
 
-# ৪. ডাটাবেস টেবিল তৈরি (Startup Event)
+
 @app.on_event('startup')
 def startup_event():
-    # Render বা Neon এ কানেক্ট হওয়ার পর টেবিল তৈরি করবে
     Base.metadata.create_all(bind=engine)
 
-    # Ensure admin user exists on startup (especially in fresh Neon/Postgres)
-    from app.database import SessionLocal
-    from app.seed import ensure_admin
+    from .database import SessionLocal
+    from .seed import ensure_admin  # ✅ fix: from app. → from .
 
     db = SessionLocal()
     try:
         ensure_admin(db)
     finally:
         db.close()
+
 
 @app.get("/")
 def read_root():
