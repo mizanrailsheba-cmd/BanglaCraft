@@ -11,19 +11,18 @@ class PaymentIn(BaseModel):
 
 class PaymentUpdate(BaseModel):
     status: str
-    transaction_id: Optional[str]
-    gateway_response: Optional[Any]
+    transaction_id: Optional[str] = None
+    gateway_response: Optional[Any] = None
 
 
 class PaymentOut(BaseModel):
     id: UUID
     order_id: UUID
     method: str
-    transaction_id: Optional[str]
+    transaction_id: Optional[str] = None
     amount: float
     currency: str
     status: str
-    gateway_response: Optional[Any]
+    gateway_response: Optional[Any] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

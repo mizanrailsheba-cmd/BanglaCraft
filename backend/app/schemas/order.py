@@ -24,8 +24,7 @@ class OrderItemOut(BaseModel):
     total_price: float
     product_snapshot: Any
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class OrderOut(BaseModel):
@@ -39,8 +38,7 @@ class OrderOut(BaseModel):
     payment_method: str
     payment_status: str
     shipping_address: Any
-    notes: Optional[str]
-    items: List[OrderItemOut]
+    notes: Optional[str] = None
+    items: List[OrderItemOut] = []
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

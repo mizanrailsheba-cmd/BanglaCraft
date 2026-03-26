@@ -1,13 +1,12 @@
-from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 
 class UserRegister(BaseModel):
-    full_name: str = Field(..., min_length=2, max_length=255)
+    full_name: str
     email: EmailStr
-    phone: Optional[str]
-    password: str = Field(..., min_length=8)
+    password: str
+    phone: Optional[str] = None
     preferred_language: Optional[str] = 'en'
 
 
@@ -19,11 +18,4 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = 'bearer'
-
-
-class TokenPayload(BaseModel):
-    sub: str
-    email: EmailStr
-    role: str
-    exp: datetime
+    user: Optional[dict] = None

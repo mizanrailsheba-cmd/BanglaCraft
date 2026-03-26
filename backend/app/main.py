@@ -56,6 +56,16 @@ def startup_event():
     # Render বা Neon এ কানেক্ট হওয়ার পর টেবিল তৈরি করবে
     Base.metadata.create_all(bind=engine)
 
+    # Ensure admin user exists on startup (especially in fresh Neon/Postgres)
+    from app.database import SessionLocal
+    from app.seed import ensure_admin
+
+    db = SessionLocal()
+    try:
+        ensure_admin(db)
+    finally:
+        db.close()
+
 @app.get("/")
 def read_root():
     return {"status": "Online", "message": "BanglaCraft API is running smoothly!"}

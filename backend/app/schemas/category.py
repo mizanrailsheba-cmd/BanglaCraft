@@ -7,8 +7,8 @@ class CategoryBase(BaseModel):
     name_en: str
     name_bn: str
     slug: str
-    parent_id: Optional[UUID]
-    image_url: Optional[str]
+    parent_id: Optional[UUID] = None
+    image_url: Optional[str] = None
 
 
 class CategoryCreate(CategoryBase):
@@ -18,5 +18,4 @@ class CategoryCreate(CategoryBase):
 class CategoryOut(CategoryBase):
     id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

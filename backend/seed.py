@@ -11,18 +11,16 @@ from app.models.voucher import Voucher
 from app.utils.security import get_password_hash
 
 
-def seed():
-    Base = __import__('app.database', fromlist=['Base']).Base
-    Base.metadata.create_all(engine)
-    db: Session = SessionLocal()
-
+def ensure_admin(db: Session):
     admin_email = os.getenv('FIRST_ADMIN_EMAIL', 'admin@banglacraft.com')
-    if not db.query(User).filter(User.email == admin_email).first():
+    admin_password = os.getenv('FIRST_ADMIN_PASSWORD', 'BanglaCraft@Admin1')
+    existing = db.query(User).filter(User.email == admin_email).first()
+    if not existing:
         admin = User(
             full_name='BanglaCraft Admin',
             email=admin_email,
             phone='+8801XXXXXXXXX',
-            hashed_password=get_password_hash('BanglaCraft@Admin1'),
+            hashed_password=get_password_hash(admin_password),
             role='admin',
             status='active',
             preferred_language='en',
@@ -30,6 +28,14 @@ def seed():
         db.add(admin)
         db.commit()
         db.refresh(admin)
+
+
+def seed():
+    Base = __import__('app.database', fromlist=['Base']).Base
+    Base.metadata.create_all(engine)
+    db: Session = SessionLocal()
+
+    ensure_admin(db)
 
     categories = [
         ('clothing', 'Clothing', 'পোশাক'),
