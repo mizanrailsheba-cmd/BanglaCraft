@@ -50,3 +50,27 @@ export const updateOrderNotes = (orderId, notes) =>
     api.put(`/api/admin/orders/${orderId}/notes`, null, {
         params: { notes }
     });
+
+// Products
+export const getAdminProducts = () =>
+    api.get('/api/products/admin/all');
+
+export const createProduct = (formData) =>
+    api.post('/api/products/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+export const updateProduct = (productId, formData) =>
+    api.put(`/api/products/${productId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+export const deleteProduct = (productId) =>
+    api.delete(`/api/products/${productId}`);
+
+export const approveProduct = (productId) =>
+    api.put(`/api/products/admin/${productId}/approve`);
+
+// Categories
+export const getCategories = () =>
+    api.get('/api/categories/');

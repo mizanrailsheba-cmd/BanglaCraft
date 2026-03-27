@@ -17,6 +17,8 @@ const STATUS_COLORS = {
     paid: 'bg-green-100 text-green-800',
     refunded: 'bg-gray-100 text-gray-700',
     active: 'bg-green-100 text-green-800',
+    draft: 'bg-amber-100 text-amber-800',
+    archived: 'bg-gray-100 text-gray-500',
     suspended: 'bg-red-100 text-red-800',
     deleted: 'bg-gray-100 text-gray-500',
     admin: 'bg-purple-100 text-purple-800',
@@ -402,6 +404,284 @@ const Orders = ({ toast }) => {
     );
 };
 
+// ── Products ──────────────────────────────────────────────────────
+const Products = ({ toast }) => {
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [editProduct, setEditProduct] = useState(null);
+    const [form, setForm] = useState({
+        name_en: '', name_bn: '', price: '', sale_price: '',
+        description_en: '', description_bn: '',
+        stock_quantity: '', category_id: '', tags: '', status: 'active'
+    });
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        Promise.all([
+            adminApi.getAdminProducts(),
+            adminApi.getCategories(),
+        ]).then(([p, c]) => {
+            setProducts(p.data);
+            setCategories(c.data);
+        }).finally(() => setLoading(false));
+    }, []);
+
+    const resetForm = () => {
+        setForm({
+            name_en: '', name_bn: '', price: '', sale_price: '',
+            description_en: '', description_bn: '',
+            stock_quantity: '', category_id: '', tags: '', status: 'active'
+        });
+        setImageFile(null);
+        setImagePreview(null);
+        setEditProduct(null);
+        setShowForm(false);
+    };
+
+    const openEdit = (p) => {
+        setEditProduct(p);
+        setForm({
+            name_en: p.name_en,
+            name_bn: p.name_bn,
+            price: p.price,
+            sale_price: p.sale_price || '',
+            description_en: p.description_en || '',
+            description_bn: p.description_bn || '',
+            stock_quantity: p.stock_quantity,
+            category_id: p.category_id,
+            tags: (p.tags || []).join(', '),
+            status: p.status,
+        });
+        setImagePreview(p.images?.[0] || null);
+        setShowForm(true);
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const handleSubmit = async () => {
+        if (!form.name_en || !form.price || !form.category_id) {
+            return toast('Name, price and category are required');
+        }
+        setSubmitting(true);
+        try {
+            const fd = new FormData();
+            Object.entries(form).forEach(([k, v]) => {
+                if (v !== '' && v !== null && v !== undefined) fd.append(k, v);
+            });
+            if (imageFile) fd.append('image', imageFile);
+
+            if (editProduct) {
+                await adminApi.updateProduct(editProduct.id, fd);
+                toast('Product updated');
+            } else {
+                await adminApi.createProduct(fd);
+                toast('Product created');
+            }
+            const r = await adminApi.getAdminProducts();
+            setProducts(r.data);
+            resetForm();
+        } catch (e) {
+            toast(e.response?.data?.detail || 'Error saving product');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Delete this product?')) return;
+        try {
+            await adminApi.deleteProduct(id);
+            setProducts(p => p.filter(x => x.id !== id));
+            toast('Product deleted');
+        } catch (e) { toast(e.response?.data?.detail || 'Error'); }
+    };
+
+    const handleApprove = async (id) => {
+        try {
+            await adminApi.approveProduct(id);
+            setProducts(p => p.map(x => x.id === id ? { ...x, is_approved: true, status: 'active' } : x));
+            toast('Product approved');
+        } catch (e) { toast(e.response?.data?.detail || 'Error'); }
+    };
+
+    if (loading) return <p className="text-gray-400">Loading...</p>;
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                    <h2 className="text-2xl font-heading text-primary">Products</h2>
+                    <p className="text-sm text-gray-500">{products.length} total</p>
+                </div>
+                <button onClick={() => { resetForm(); setShowForm(true); }}
+                    className="bg-primary text-white text-sm px-4 py-2 rounded-lg hover:bg-primary/90">
+                    + Add Product
+                </button>
+            </div>
+
+            {showForm && (
+                <div className="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-primary">
+                                {editProduct ? 'Edit Product' : 'Add New Product'}
+                            </h3>
+                            <button onClick={resetForm} className="text-gray-400 text-xl">✕</button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {[
+                                { label: 'Name (English)', key: 'name_en' },
+                                { label: 'Name (বাংলা)', key: 'name_bn' },
+                            ].map(f => (
+                                <div key={f.key}>
+                                    <label className="text-xs text-gray-500 block mb-1">{f.label}</label>
+                                    <input value={form[f.key]}
+                                        onChange={e => setForm(x => ({ ...x, [f.key]: e.target.value }))}
+                                        className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+                                </div>
+                            ))}
+                            {[
+                                { label: 'Price (৳)', key: 'price', type: 'number' },
+                                { label: 'Sale Price (৳)', key: 'sale_price', type: 'number' },
+                                { label: 'Stock Quantity', key: 'stock_quantity', type: 'number' },
+                            ].map(f => (
+                                <div key={f.key}>
+                                    <label className="text-xs text-gray-500 block mb-1">{f.label}</label>
+                                    <input type={f.type} value={form[f.key]}
+                                        onChange={e => setForm(x => ({ ...x, [f.key]: e.target.value }))}
+                                        className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+                                </div>
+                            ))}
+                            <div>
+                                <label className="text-xs text-gray-500 block mb-1">Category</label>
+                                <select value={form.category_id}
+                                    onChange={e => setForm(x => ({ ...x, category_id: e.target.value }))}
+                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm">
+                                    <option value="">Select category</option>
+                                    {categories.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name_en}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500 block mb-1">Status</label>
+                                <select value={form.status}
+                                    onChange={e => setForm(x => ({ ...x, status: e.target.value }))}
+                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm">
+                                    <option value="active">Active</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-3">
+                            <label className="text-xs text-gray-500 block mb-1">Description (English)</label>
+                            <textarea rows={3} value={form.description_en}
+                                onChange={e => setForm(x => ({ ...x, description_en: e.target.value }))}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none" />
+                        </div>
+                        <div className="mt-3">
+                            <label className="text-xs text-gray-500 block mb-1">Description (বাংলা)</label>
+                            <textarea rows={3} value={form.description_bn}
+                                onChange={e => setForm(x => ({ ...x, description_bn: e.target.value }))}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none" />
+                        </div>
+                        <div className="mt-3">
+                            <label className="text-xs text-gray-500 block mb-1">Tags (comma separated)</label>
+                            <input value={form.tags}
+                                onChange={e => setForm(x => ({ ...x, tags: e.target.value }))}
+                                placeholder="e.g. handmade, cotton, traditional"
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                        <div className="mt-3">
+                            <label className="text-xs text-gray-500 block mb-1">Product Image</label>
+                            <div className="flex items-center gap-3">
+                                {imagePreview && (
+                                    <img src={imagePreview} alt="preview"
+                                        className="w-16 h-16 object-cover rounded-lg border border-border" />
+                                )}
+                                <label className="cursor-pointer border border-dashed border-border rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors">
+                                    {imageFile ? imageFile.name : 'Click to upload image'}
+                                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                                </label>
+                            </div>
+                        </div>
+                        <button onClick={handleSubmit} disabled={submitting}
+                            className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium mt-4 disabled:opacity-60">
+                            {submitting ? 'Saving...' : (editProduct ? 'Update Product' : 'Create Product')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="bg-white border border-border rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead className="bg-gray-50 border-b border-border">
+                            <tr>
+                                {['Image', 'Name', 'Category', 'Price', 'Stock', 'Status', 'Approved', 'Actions'].map(h => (
+                                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {products.length === 0 ? (
+                                <tr><td colSpan={8} className="text-center py-10 text-gray-400">No products yet</td></tr>
+                            ) : products.map(p => (
+                                <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                    <td className="px-4 py-3">
+                                        {p.images?.[0]
+                                            ? <img src={p.images[0]} alt={p.name_en} className="w-10 h-10 object-cover rounded-lg" />
+                                            : <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xs">No img</div>
+                                        }
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium">{p.name_en}</div>
+                                        <div className="text-xs text-gray-400">{p.name_bn}</div>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-500 text-xs">{p.category_name}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="font-medium">৳{p.price}</div>
+                                        {p.sale_price && <div className="text-xs text-green-600">Sale: ৳{p.sale_price}</div>}
+                                    </td>
+                                    <td className="px-4 py-3">{p.stock_quantity}</td>
+                                    <td className="px-4 py-3"><Badge text={p.status} /></td>
+                                    <td className="px-4 py-3">
+                                        {p.is_approved
+                                            ? <span className="text-xs text-green-600 font-medium">✓ Approved</span>
+                                            : <button onClick={() => handleApprove(p.id)}
+                                                className="text-xs border border-green-200 text-green-700 px-2 py-1 rounded-lg hover:bg-green-50">
+                                                Approve
+                                            </button>
+                                        }
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex gap-1">
+                                            <button onClick={() => openEdit(p)}
+                                                className="text-xs border border-border px-2 py-1 rounded-lg hover:bg-gray-50">Edit</button>
+                                            <button onClick={() => handleDelete(p.id)}
+                                                className="text-xs border border-red-200 text-red-600 px-2 py-1 rounded-lg hover:bg-red-50">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ── Settings ──────────────────────────────────────────────────────
 const Settings = ({ toast }) => {
     const [form, setForm] = useState({ old_password: '', new_password: '', confirm: '' });
@@ -470,6 +750,7 @@ const AdminPanelPage = () => {
         { to: '/admin', label: 'Dashboard', end: true },
         { to: '/admin/users', label: 'Users' },
         { to: '/admin/orders', label: 'Orders' },
+        { to: '/admin/products', label: 'Products' },
         { to: '/admin/settings', label: 'Settings' },
     ];
 
@@ -509,6 +790,7 @@ const AdminPanelPage = () => {
                         <Route index element={<Dashboard stats={stats} />} />
                         <Route path="users" element={<Users toast={showToast} />} />
                         <Route path="orders" element={<Orders toast={showToast} />} />
+                        <Route path="products" element={<Products toast={showToast} />} />
                         <Route path="settings" element={<Settings toast={showToast} />} />
                     </Routes>
                 </main>
