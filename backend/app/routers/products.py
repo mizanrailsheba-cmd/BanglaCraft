@@ -27,7 +27,7 @@ def create_product(
     slug: Optional[str] = Form(None),
     tags: Optional[str] = Form(''),
     status: Optional[str] = Form('active'),
-    image: Optional[UploadFile] = File(None),
+    images: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
     current_user=Depends(seller_or_admin)
 ):
@@ -36,16 +36,17 @@ def create_product(
     if existing:
         raise HTTPException(status_code=400, detail='Product slug already exists')
 
-    image_url = None
-    if image and image.filename:
-        try:
-            upload_result = cloudinary.uploader.upload(
-                image.file,
-                folder="banglacraft/products"
-            )
-            image_url = upload_result.get("secure_url")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
+    image_urls = []
+    for image in images:
+        if image and image.filename:
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    image.file,
+                    folder="banglacraft/products"
+                )
+                image_urls.append(upload_result.get("secure_url"))
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
     tags_list = [t.strip() for t in tags.split(',')] if tags else []
 
@@ -60,7 +61,7 @@ def create_product(
         category_id=category_id,
         seller_id=current_user.id,
         slug=product_slug,
-        images=[image_url] if image_url else [],
+        images=image_urls,
         tags=tags_list,
         status=status,
         is_approved=True if current_user.role == 'admin' else False,
@@ -164,7 +165,7 @@ def update_product(
     category_id: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
     status: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None),
+    images: List[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
     current_user=Depends(seller_or_admin)
 ):
@@ -186,18 +187,22 @@ def update_product(
     if tags is not None:
         product.tags = [t.strip() for t in tags.split(',')] if tags else []
 
-    if image and image.filename:
-        try:
-            upload_result = cloudinary.uploader.upload(
-                image.file,
-                folder="banglacraft/products"
-            )
-            new_url = upload_result.get("secure_url")
-            images = product.images or []
-            images.insert(0, new_url)
-            product.images = images
-        except Exception as e:
-            raise HTTPException(500, f"Image upload failed: {str(e)}")
+    # নতুন images আসলে existing এর সাথে যোগ করো
+    new_image_urls = []
+    for image in images:
+        if image and image.filename:
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    image.file,
+                    folder="banglacraft/products"
+                )
+                new_image_urls.append(upload_result.get("secure_url"))
+            except Exception as e:
+                raise HTTPException(500, f"Image upload failed: {str(e)}")
+
+    if new_image_urls:
+        existing_images = product.images or []
+        product.images = new_image_urls + existing_images  # নতুন ছবি সামনে
 
     db.commit()
     db.refresh(product)
