@@ -416,8 +416,8 @@ const Products = ({ toast }) => {
         description_en: '', description_bn: '',
         stock_quantity: '', category_id: '', tags: '', status: 'active'
     });
-    const [imageFile, setImageFile] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    const [imageFiles, setImageFiles] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -436,8 +436,8 @@ const Products = ({ toast }) => {
             description_en: '', description_bn: '',
             stock_quantity: '', category_id: '', tags: '', status: 'active'
         });
-        setImageFile(null);
-        setImagePreview(null);
+        setImageFiles([]);
+        setImagePreviews([]);
         setEditProduct(null);
         setShowForm(false);
     };
@@ -456,15 +456,22 @@ const Products = ({ toast }) => {
             tags: (p.tags || []).join(', '),
             status: p.status,
         });
-        setImagePreview(p.images?.[0] || null);
+        setImagePreviews(p.images || []);
+        setImageFiles([]);
         setShowForm(true);
     };
 
     const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        setImageFiles(prev => [...prev, ...files]);
+        const previews = files.map(f => URL.createObjectURL(f));
+        setImagePreviews(prev => [...prev, ...previews]);
+    };
+
+    const removeImage = (index) => {
+        setImageFiles(prev => prev.filter((_, i) => i !== index));
+        setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async () => {
@@ -477,7 +484,7 @@ const Products = ({ toast }) => {
             Object.entries(form).forEach(([k, v]) => {
                 if (v !== '' && v !== null && v !== undefined) fd.append(k, v);
             });
-            if (imageFile) fd.append('image', imageFile);
+            imageFiles.forEach(file => fd.append('images', file));
 
             if (editProduct) {
                 await adminApi.updateProduct(editProduct.id, fd);
@@ -602,19 +609,38 @@ const Products = ({ toast }) => {
                                 placeholder="e.g. handmade, cotton, traditional"
                                 className="w-full border border-border rounded-lg px-3 py-2 text-sm" />
                         </div>
+
+                        {/* ── Multiple Image Upload ── */}
                         <div className="mt-3">
-                            <label className="text-xs text-gray-500 block mb-1">Product Image</label>
-                            <div className="flex items-center gap-3">
-                                {imagePreview && (
-                                    <img src={imagePreview} alt="preview"
-                                        className="w-16 h-16 object-cover rounded-lg border border-border" />
-                                )}
-                                <label className="cursor-pointer border border-dashed border-border rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors">
-                                    {imageFile ? imageFile.name : 'Click to upload image'}
-                                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            <label className="text-xs text-gray-500 block mb-1">
+                                Product Images <span className="text-gray-400">(একাধিক ছবি দিতে পারবে)</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {imagePreviews.map((src, i) => (
+                                    <div key={i} className="relative">
+                                        <img src={src} alt={`preview-${i}`}
+                                            className="w-16 h-16 object-cover rounded-lg border border-border" />
+                                        <button
+                                            onClick={() => removeImage(i)}
+                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center hover:bg-red-600">
+                                            ✕
+                                        </button>
+                                        {i === 0 && (
+                                            <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[9px] text-center rounded-b-lg">
+                                                Main
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                                <label className="cursor-pointer border-2 border-dashed border-border rounded-lg w-16 h-16 flex flex-col items-center justify-center text-gray-400 hover:border-primary hover:text-primary transition-colors">
+                                    <span className="text-2xl leading-none">+</span>
+                                    <span className="text-[10px]">Add</span>
+                                    <input type="file" accept="image/*" multiple onChange={handleImageChange} className="hidden" />
                                 </label>
                             </div>
+                            <p className="text-xs text-gray-400">প্রথম ছবিটি Main Image হিসেবে দেখাবে</p>
                         </div>
+
                         <button onClick={handleSubmit} disabled={submitting}
                             className="w-full bg-primary text-white py-2.5 rounded-lg text-sm font-medium mt-4 disabled:opacity-60">
                             {submitting ? 'Saving...' : (editProduct ? 'Update Product' : 'Create Product')}
