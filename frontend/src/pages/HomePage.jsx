@@ -21,7 +21,7 @@ const SLIDES = [
     {
         img: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=1400',
         label: 'Premium',
-        title: 'এক্সক্লুসিভ কালেকশন',
+        title: 'ব্যতিক্রমী কালেকশন',
         sub: 'Discover our finest handmade textile collection',
     },
 ];
@@ -304,3 +304,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+
