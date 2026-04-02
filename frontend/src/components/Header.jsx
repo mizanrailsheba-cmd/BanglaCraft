@@ -7,9 +7,12 @@ const Header = () => {
     const navigate = useNavigate();
 
     const token = localStorage.getItem('access_token');
+    const role = localStorage.getItem('user_role');
 
     const logout = () => {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_name');
         navigate('/login');
     };
 
@@ -22,12 +25,33 @@ const Header = () => {
                 </Link>
 
                 <nav className="flex items-center gap-3">
-                    <NavLink to="/" className={({ isActive }) => isActive ? 'font-semibold text-secondary' : 'text-gray-700'}>{t('home')}</NavLink>
+                    <NavLink to="/" end className={({ isActive }) => isActive ? 'font-semibold text-secondary' : 'text-gray-700'}>{t('home')}</NavLink>
                     <NavLink to="/products" className={({ isActive }) => isActive ? 'font-semibold text-secondary' : 'text-gray-700'}>{t('products')}</NavLink>
                     <NavLink to="/cart" className={({ isActive }) => isActive ? 'font-semibold text-secondary' : 'text-gray-700'}>{t('cart')}</NavLink>
                     <NavLink to="/contact" className={({ isActive }) => isActive ? 'font-semibold text-secondary' : 'text-gray-700'}>{t('contact us')}</NavLink>
+
                     {token ? (
-                        <button onClick={logout} className="text-red-500">{t('logout')}</button>
+                        <>
+                            {role === 'admin' && (
+                                <NavLink to="/admin"
+                                    className={({ isActive }) => isActive
+                                        ? 'font-semibold text-purple-700 bg-purple-50 px-3 py-1 rounded-lg'
+                                        : 'text-purple-600 bg-purple-50 px-3 py-1 rounded-lg hover:bg-purple-100 transition-colors'
+                                    }>
+                                    Admin Panel
+                                </NavLink>
+                            )}
+                            {role === 'customer' && (
+                                <NavLink to="/dashboard"
+                                    className={({ isActive }) => isActive
+                                        ? 'font-semibold text-secondary'
+                                        : 'text-gray-700'
+                                    }>
+                                    Dashboard
+                                </NavLink>
+                            )}
+                            <button onClick={logout} className="text-red-500">{t('logout')}</button>
+                        </>
                     ) : (
                         <>
                             <NavLink to="/login" className="text-gray-700">{t('login')}</NavLink>
