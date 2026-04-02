@@ -221,6 +221,6 @@ def delete_product(
         raise HTTPException(status_code=404, detail='Product not found')
     if current_user.role != 'admin' and product.seller_id != current_user.id:
         raise HTTPException(status_code=403, detail='Not allowed')
-    product.status = 'archived'
+    db.delete(product)
     db.commit()
     return {'status': 'deleted'}
