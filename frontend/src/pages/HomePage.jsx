@@ -7,7 +7,7 @@ import api from '../api/client';
 // ── Hero slides — reliable Pexels images ─────────────────────────
 const SLIDES = [
     {
-        img: '/hero1.jpg',
+        img: 'https://i.ibb.co/QFLP5Z0y/hero1-jpg.jpg',
         label: 'New Collection',
         title: 'বৈশাখী সংগ্রহ',
         sub: 'Traditional handwoven sarees for every occasion',
