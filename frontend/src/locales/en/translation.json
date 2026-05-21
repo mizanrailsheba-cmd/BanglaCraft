@@ -9,8 +9,8 @@
     "add to cart": "Add to Cart",
     "checkout": "Checkout",
     "order placed": "Order placed",
-    "out of stock": "Out of stock",
-    "search products": "Search products",
+    "out of stock": "Out of Stock",
+    "search products": "Search products...",
     "change password": "Change password",
     "logout": "Logout",
     "admin panel": "Admin Panel",
@@ -26,5 +26,12 @@
     "available hours": "Available 9 AM – 9 PM (BD Time)",
     "whatsapp support": "WhatsApp Support",
     "store address": "Dhaka, Bangladesh",
-    "no products found": "No products found"
+    "no products found": "No products found",
+    "view": "View",
+    "view details": "View Details",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "full name": "Full Name",
+    "registered successfully, please login": "Registered successfully. Please log in.",
+    "tagline": "Crafted with heart, rooted in Bangladesh — handmade textiles and crafts from skilled artisans."
 }
