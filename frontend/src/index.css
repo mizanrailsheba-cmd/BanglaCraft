@@ -6,12 +6,137 @@
     --text: #1A1A1A;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     background: #FDF6EC;
     color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .html.lang-bn,
 .lang-bn body {
     font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+}
+
+/* ── Focus ring ───────────────────────────────────────────── */
+*:focus-visible {
+    outline: 2px solid #C0622F;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+@layer components {
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 font-medium text-sm px-5 py-2.5 rounded-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed;
+    }
+
+    .btn-primary {
+        @apply btn bg-primary text-white hover:bg-primary-dark shadow-soft hover:shadow-glow;
+    }
+
+    .btn-secondary {
+        @apply btn bg-secondary text-white hover:bg-secondary-dark;
+    }
+
+    .btn-outline {
+        @apply btn border-2 border-ink text-ink bg-transparent hover:bg-ink hover:text-white;
+    }
+
+    .btn-ghost {
+        @apply btn text-ink hover:bg-border-soft;
+    }
+
+    .btn-whatsapp {
+        @apply btn bg-whatsapp text-white hover:brightness-110;
+    }
+
+    /* ── Card ─────────────────────────────────────────────── */
+    .card {
+        @apply bg-surface rounded-2xl shadow-soft border border-border-soft;
+    }
+
+    .card-hover {
+        @apply transition-all duration-300 hover:shadow-card hover:-translate-y-0.5;
+    }
+
+    /* ── Inputs ───────────────────────────────────────────── */
+    .input {
+        @apply w-full bg-surface border border-border rounded-lg px-4 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-2 focus:ring-primary/15 focus:outline-none transition-colors;
+    }
+
+    .label {
+        @apply block text-xs font-medium text-ink-soft mb-1.5 uppercase tracking-wide;
+    }
+
+    /* ── Badges ───────────────────────────────────────────── */
+    .badge {
+        @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    }
+
+    .badge-primary {
+        @apply badge bg-primary-50 text-primary-dark;
+    }
+
+    .badge-success {
+        @apply badge bg-green-50 text-green-700;
+    }
+
+    .badge-danger {
+        @apply badge bg-red-50 text-red-600;
+    }
+
+    .badge-accent {
+        @apply badge bg-accent/15 text-accent-dark;
+    }
+
+    /* ── Section ──────────────────────────────────────────── */
+    .section-title {
+        @apply font-heading text-3xl md:text-4xl text-ink leading-tight;
+    }
+
+    .section-eyebrow {
+        @apply text-xs font-bold tracking-[0.3em] uppercase text-primary;
+    }
+
+    /* ── Skeleton loader ─────────────────────────────────── */
+    .skeleton {
+        background: linear-gradient(90deg, #F1ECDF 0%, #FBF1EA 40%, #F1ECDF 80%);
+        background-size: 800px 100%;
+        @apply animate-shimmer rounded-lg;
+    }
+}
+
+@layer utilities {
+    /* Hide scrollbars while keeping scroll behavior */
+    .scrollbar-hide {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Maintain aspect ratios in older browsers */
+    .aspect-square {
+        aspect-ratio: 1 / 1;
+    }
 }
